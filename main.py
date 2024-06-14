@@ -182,6 +182,9 @@ class ThreeWindow(QMainWindow):
                 self.sudoku_board[i][j].setGeometry(300 + j * 40, 120 + i * 40, 40, 40)
                 self.sudoku_board[i][j].setAlignment(Qt.AlignCenter)
                 self.sudoku_board[i][j].setValidator(QIntValidator(1, 9))  # Ограничение на ввод чисел от 1 до 9
+                if random.random() < 0.4:
+                    random_number = random.randint(1, 9)
+                    self.sudoku_board[i][j].setText(str(random_number))
 
         # Добавление надписи над полем
         self.Main_nadpis2 = QLabel(self)
@@ -263,9 +266,10 @@ class FiveWindow(QMainWindow):
         self.back3.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
         self.back3.clicked.connect(lambda: self.back_open1(level2_window))
 
-        self.back3 = QPushButton('Проверка', self)
-        self.back3.setGeometry(40, 200, 180, 50)
-        self.back3.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
+        self.back4 = QPushButton('Проверка', self)
+        self.back4.setGeometry(40, 200, 180, 50)
+        self.back4.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
+        self.back4.clicked.connect(lambda: self.check_sudoku_board())
 
         self.sudoku_board = [[0 for _ in range(9)] for _ in range(9)]
         for i in range(9):
@@ -286,10 +290,44 @@ class FiveWindow(QMainWindow):
 
                 # Кнопка назад на уровень 3
 
+    def check_sudoku_board(self):
+        for i in range(9):
+            row = [self.sudoku_board[i][j].text() for j in range(9)]
+            if len(row) != len(set(row)):
+                return False
+
+        for j in range(9):
+            column = [self.sudoku_board[i][j].text() for i in range(9)]
+            if len(column) != len(set(column)):
+                return False
+
+        for i in range(0, 9, 3):
+            for j in range(0, 9, 3):
+                square = [self.sudoku_board[m][n].text() for m in range(i, i + 3) for n in range(j, j + 3)]
+                if len(square) != len(set(square)):
+                    return False
+
+        return True
+
     def back_open1(self, level2_windows):
         level2_windows.show()
         self.close()
 
+
+
+    def is_valid_square(self, row, col):
+        current_text = self.board[row][col].text().strip()
+        if current_text == '':
+            return True  # Пустая ячейка считается валидной
+        current_value = int(current_text)
+        start_row, start_col = 3 * (row // 3), 3 * (col // 3)
+        for i in range(start_row, start_row + 3):
+            for j in range(start_col, start_col + 3):
+                if i != row and j != col:
+                    cell_text = self.board[i][j].text().strip()
+                    if cell_text != '' and int(cell_text) == current_value:
+                        return False
+        return True
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
