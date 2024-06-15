@@ -1,12 +1,13 @@
 import sys
 from PyQt5 import QtWidgets, QtCore, QtGui
-import random
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QMainWindow,
-                             QMessageBox, QVBoxLayout, QWidget,
-                             QGridLayout, QFrame, QLineEdit, QGraphicsLineItem, QHBoxLayout,
-                             QLineEdit, QGraphicsScale)
-from PyQt5.QtGui import QPixmap, QPainter, QColor, QFont, QIntValidator, QPen
+from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel,
+                             QMessageBox, QVBoxLayout, QWidget, QGridLayout,
+                             QFrame, QLineEdit, QGraphicsLineItem, QHBoxLayout,
+                             QLineEdit, QGraphicsScale, QStackedLayout)
+from PyQt5.QtGui import QPixmap, QPainter, QColor, QFont, QIntValidator, QPen, QBrush
 from PyQt5.QtCore import Qt
+import random
+
 
 class SudokuGenerator:
     def __init__(self):
@@ -36,75 +37,85 @@ class SudokuGenerator:
                 self.board[row][col] = 0
         return False
 
-class sudoky(QMainWindow):
+    def _is_safe_to_place(self, row, col, number):
+        if number in self.board[row]:
+            return False
+        if number in [self.board[i][col] for i in range(9)]:
+            return False
+        start_row, start_col = 3 * (row // 3), 3 * (col // 3)
+        for i in range(start_row, start_row + 3):
+            for j in range(start_col, start_col + 3):
+                if self.board[i][j] == number:
+                    return False
+        return True
 
+    def remove_numbers_from_board(self, num_holes):
+        count = 0
+        while count < num_holes:
+            row = random.randint(0, 8)
+            col = random.randint(0, 8)
+            if self.board[row][col] != 0:
+                self.board[row][col] = 0
+                count += 1
+
+
+class sudoky(QMainWindow):
     def __init__(self):
         super(sudoky, self).__init__()
-        self.two_window = TwoWindow(self)
-        self.background = QLabel(self)
         self.initUI()
 
     def initUI(self):
-        self.setWindowTitle("Sudoky")
-        self.setGeometry(0, 0, 700, 600)
+        self.setWindowTitle("Судоку")
+        self.setFixedSize(700, 600)
 
-        # Создание фонового изображения
+        self.background = QLabel(self)
         self.background.setPixmap(QPixmap("qwerty/menu.jpg"))
         self.background.setGeometry(0, 0, 700, 600)
         self.background.setScaledContents(True)
 
-        # Создание надписи судок
         self.Main_nadpis1 = QLabel(self)
         self.Main_nadpis1.setText("Судоку")
         self.Main_nadpis1.setStyleSheet("font: 75 italic 30pt \"Arial\";\n" "color: rgb(0, 0, 0);")
         self.Main_nadpis1.setGeometry(270, 160, 200, 70)
 
-        # Создание кнопки начала игры
         self.igrat = QtWidgets.QPushButton(self)
         self.igrat.setText("Играть")
         self.igrat.setStyleSheet("font: 75 italic 24pt \"Arial\";\n""color:rgb(0, 0, 0);")
         self.igrat.setGeometry(250, 250, 200, 50)
         self.igrat.clicked.connect(self.open_window2)
 
-        # Настройки кнопки Выход
         self.end = QPushButton('Выход', self)
         self.end.setGeometry(250, 380, 200, 50)
         self.end.setStyleSheet("font: 75 italic 24pt \"Arial\";\n""color:rgb(0, 0, 0);")
         self.end.clicked.connect(self.close)
 
-        # Настройка кнопки Правила
         self.prav = QPushButton('Правила', self)
         self.prav.setGeometry(250, 314, 200, 50)
         self.prav.setStyleSheet("font: 75 italic 24pt \"Arial\";\n""color:rgb(0, 0, 0);")
         self.prav.clicked.connect(self.open_window)
 
-    # Создание окна правила
     def open_window(self):
         self.one_window = OneWindow(self)
         self.hide()
         self.one_window.show()
 
-    # Создание окна начала игры
     def open_window2(self):
+        self.two_window = TwoWindow(self)
         self.hide()
         self.two_window.show()
-
-    # Правила
 
 
 class OneWindow(QMainWindow):
     def __init__(self, first_window):
         super().__init__()
-        self.setWindowTitle('Sudoky')
-        self.setGeometry(0, 0, 700, 600)
+        self.setWindowTitle('Правила')
+        self.setFixedSize(700, 600)
 
-        # Создание фонового изображения
         self.background = QLabel(self)
         self.background.setPixmap(QPixmap("qwerty/pravila.png"))
         self.background.setGeometry(0, 0, 700, 600)
         self.background.setScaledContents(True)
 
-        # Создание кнопки назад
         self.back = QPushButton('X', self)
         self.back.setGeometry(600, 70, 78, 78)
         self.back.setStyleSheet(
@@ -115,232 +126,202 @@ class OneWindow(QMainWindow):
         first_window.show()
         self.close()
 
-    # Создание окна начало
-
 
 class TwoWindow(QMainWindow):
     def __init__(self, second_window):
         super().__init__()
-        self.level_window = ThreeWindow(self)
-        self.level1_window = FourWindow(self)
-        self.level2_window = FiveWindow(self)
-        self.setWindowTitle('Sudoky')
-        self.setGeometry(0, 0, 700, 600)
+        self.level_window = ThreeWindow(self, 'Легкий')
+        self.level1_window = ThreeWindow(self, 'Средний')
+        self.level2_window = ThreeWindow(self, 'Сложный')
+        self.setWindowTitle('Выбор уровня сложности')
+        self.setFixedSize(700, 600)
 
-        # Создание фонового изображения окна начало
         self.background = QLabel(self)
         self.background.setPixmap(QPixmap("qwerty/menu.jpg"))
         self.background.setGeometry(0, 0, 700, 600)
         self.background.setScaledContents(True)
 
-        # Создание кнопки назад в окне начало
         self.back = QPushButton('Назад', self)
         self.back.setGeometry(40, 520, 150, 50)
         self.back.setStyleSheet("font: 75 italic 24pt \"Arial\";\n""color:rgb(0, 0, 0);")
         self.back.clicked.connect(lambda: self.back_open(second_window))
 
-        # Создание кнопки уровень легкий в окне начало
         self.level1 = QPushButton('Легкий', self)
-        self.level1.setGeometry(80, 100, 150, 50)
+        self.level1.setGeometry(80, 150, 150, 150)
         self.level1.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
-        self.level1.clicked.connect(self.open3_window)
+        self.level1.clicked.connect(self.open_easy_window)
 
-        # Создание кнопки уровень средний в окне начало
         self.level2 = QPushButton('Средний', self)
-        self.level2.setGeometry(280, 100, 150, 50)
+        self.level2.setGeometry(280, 150, 150, 150)
         self.level2.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
-        self.level2.clicked.connect(self.open4_window)
+        self.level2.clicked.connect(self.open_medium_window)
 
-        # Создание кнопки уровень сложный в окне начало
         self.level3 = QPushButton('Сложный', self)
-        self.level3.setGeometry(480, 100, 150, 50)
+        self.level3.setGeometry(480, 150, 150, 150)
         self.level3.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
-        self.level3.clicked.connect(self.open5_window)
+        self.level3.clicked.connect(self.open_hard_window)
 
     def back_open(self, first_window):
         first_window.show()
         self.close()
 
-    # Создание окна уровень 1
-    def open3_window(self):
+    def open_easy_window(self):
         self.hide()
         self.level_window.show()
 
-    # Создание окна уровень 2
-    def open4_window(self):
+    def open_medium_window(self):
         self.hide()
         self.level1_window.show()
 
-    # Создание окна уровень 3
-    def open5_window(self):
+    def open_hard_window(self):
         self.hide()
         self.level2_window.show()
 
-    # Уровень 1
-
 
 class ThreeWindow(QMainWindow):
-    def __init__(self, level_window):
+    def __init__(self, parent, difficulty):
         super().__init__()
-        self.setWindowTitle('Sudoky')
-        self.setGeometry(0, 0, 700, 600)
+        self.difficulty = difficulty
+        self.setWindowTitle('Уровень')
+        self.setFixedSize(700, 610)
+        self.num_holes = self.get_num_holes()
 
-        # Создание фонового изображения окна уровень 1
-        self.background = QLabel(self)
-        self.background.setPixmap(QPixmap("qwerty/menu.jpg"))
-        self.background.setGeometry(0, 0, 700, 600)
-        self.background.setScaledContents(True)
+        # Создание центрального виджета для кнопок и поля Sudoku
+        central_widget = QWidget(self)
 
-        # Кнопка проверки
-        self.proverka = QPushButton('Проверка', self)
-        self.proverka.setGeometry(40, 200, 180, 50)
-        self.proverka.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
+        # Установка центрального виджета в окне
+        self.setCentralWidget(central_widget)
 
-        # Кнопка назад на уровень 1
-        self.back1 = QPushButton('Назад', self)
-        self.back1.setGeometry(5, 5, 150, 50)
-        self.back1.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
-        self.back1.clicked.connect(lambda: self.back_open(level_window))
+        # Установка фонового изображения окна
+        self.set_background("qwerty/уровни.jpg")
 
-        self.sudoku_board = [[0 for _ in range(9)] for _ in range(9)]
+        # Создание кнопки "Назад"
+        self.back = QPushButton('Назад', central_widget)
+        self.back.setStyleSheet("font: 75 italic 24pt \"Arial\"; color: rgb(255, 255, 255); background-color: black;")
+        self.back.clicked.connect(lambda: self.back_open(parent))
+
+        # Создание кнопки "Сгенерировать"
+        self.generate_button = QPushButton('Сгенерировать', central_widget)
+        self.generate_button.setStyleSheet(
+            "font: 75 italic 24pt \"Arial\"; color: rgb(255, 255, 255); background-color: black;")
+        self.generate_button.clicked.connect(self.generate_sudoku)
+
+        # Создание кнопки "Проверить"
+        self.check_button = QPushButton('Проверить', central_widget)
+        self.check_button.setStyleSheet(
+            "font: 75 italic 24pt \"Arial\"; color: rgb(255, 255, 255); background-color: black;")
+        self.check_button.clicked.connect(self.check_sudoku)
+        self.check_button.setEnabled(False)  # Начально кнопка неактивна
+
+        # Создание виджета для поля Sudoku
+        self.board_widget = QWidget(self)
+        grid_layout = QGridLayout(self.board_widget)
+        grid_layout.setSpacing(0)
+        grid_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.board = [[QLineEdit(self) for _ in range(9)] for _ in range(9)]
+
         for i in range(9):
             for j in range(9):
-                self.sudoku_board[i][j] = QLineEdit(self)
-                self.sudoku_board[i][j].setGeometry(300 + j * 40, 120 + i * 40, 40, 40)
-                self.sudoku_board[i][j].setAlignment(Qt.AlignCenter)
-                self.sudoku_board[i][j].setValidator(QIntValidator(1, 9))  # Ограничение на ввод чисел от 1 до 9
-                if random.random() < 0.4:
-                    random_number = random.randint(1, 9)
-                    self.sudoku_board[i][j].setText(str(random_number))
+                cell = self.board[i][j]
+                cell.setFixedSize(60, 60)
+                cell.setAlignment(Qt.AlignCenter)
+                cell.setFont(QFont("Arial", 16))
+                cell.setValidator(QIntValidator(1, 9))
+                cell.textChanged.connect(self.check_input)
 
-        # Добавление надписи над полем
-        self.Main_nadpis2 = QLabel(self)
-        self.Main_nadpis2.setText("Уровень: легкий")
-        self.Main_nadpis2.setStyleSheet("font: 75 italic 25pt \"Arial\";\n" "color: rgb(255, 255, 255);")
-        self.Main_nadpis2.setGeometry(320, 40, 400, 100)
+                grid_layout.addWidget(cell, i, j)
 
-    # Кнопка назад на окне уровень 1
-    def back_open(self, level_windows):
-        level_windows.show()
+        # Создание разметки для центрального виджета
+        central_layout = QVBoxLayout(central_widget)
+        central_layout.addWidget(self.back)
+        central_layout.addWidget(self.generate_button)
+        central_layout.addWidget(self.check_button)
+        central_layout.addWidget(self.board_widget)
+
+    def set_background(self, image_path):
+        # Установка фонового изображения окна через стиль CSS
+        style_str = f"background-image: url('{image_path}'); background-position: center; background-repeat: no-repeat; background-attachment: fixed;"
+        central_widget = self.centralWidget()
+        central_widget.setStyleSheet(style_str)
+
+    def get_num_holes(self):
+        if self.difficulty == 'Легкий':
+            return 30
+        elif self.difficulty == 'Средний':
+            return 40
+        elif self.difficulty == 'Сложный':
+            return 50
+
+    # Кнопка назад
+    def back_open(self, level_window):
+        level_window.show()
         self.close()
 
-    # Уровень 2
+    def generate_sudoku(self):
+        generator = SudokuGenerator()
+        generator.generate_full_board()
+        generator.remove_numbers_from_board(self.num_holes)
+        board = generator.board
 
-
-class FourWindow(QMainWindow):
-    def __init__(self, level1_windows):
-        super().__init__()
-        self.setWindowTitle('Sudoky')
-        self.setGeometry(0, 0, 700, 600)
-
-        # Создание фонового изображения окна уровень 2
-        self.background = QLabel(self)
-        self.background.setPixmap(QPixmap("qwerty/menu.jpg"))
-        self.background.setGeometry(0, 0, 700, 600)
-        self.background.setScaledContents(True)
-
-        # Создание кнопки назад на окне уровень 2
-        self.back2 = QPushButton('Назад', self)
-        self.back2.setGeometry(5, 5, 150, 50)
-        self.back2.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
-        self.back2.clicked.connect(lambda: self.back_open(level1_windows))
-
-        self.back3 = QPushButton('Проверка', self)
-        self.back3.setGeometry(40, 200, 180, 50)
-        self.back3.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
-
-        self.sudoku_board = [[0 for _ in range(9)] for _ in range(9)]
         for i in range(9):
             for j in range(9):
-                self.sudoku_board[i][j] = QLineEdit(self)
-                self.sudoku_board[i][j].setGeometry(300 + j * 40, 120 + i * 40, 40, 40)
-                self.sudoku_board[i][j].setAlignment(Qt.AlignCenter)
-                self.sudoku_board[i][j].setValidator(QIntValidator(1, 9))  # Ограничение на ввод чисел от 1 до 9
+                value = board[i][j]
+                cell = self.board[i][j]
+                if value != 0:
+                    cell.setText(str(value))
+                    cell.setReadOnly(True)
+                else:
+                    cell.clear()
+                    cell.setReadOnly(False)
+                self.check_button.setEnabled(True)
 
-                if random.random() < 0.4:
-                    random_number = random.randint(1, 9)
-                    self.sudoku_board[i][j].setText(str(random_number))
+    def check_input(self, text):
+        sender = self.sender()  # Получаем объект QLineEdit, который послал сигнал
+        if text.strip() == '':
+            return
 
-        self.Main_nadpis3 = QLabel(self)
-        self.Main_nadpis3.setText("Уровень: средний")
-        self.Main_nadpis3.setStyleSheet("font: 75 italic 25pt \"Arial\";\n" "color: rgb(255, 255, 255);")
-        self.Main_nadpis3.setGeometry(320, 40, 400, 100)
+        value = int(text) if text.isdigit() else None
+        if value is None or not (1 <= value <= 9):
+            QMessageBox.warning(self, "Ошибка", "Введите число от 1 до 9")
+            sender.clear()
 
-    # Кнопка назад на окне уровень 2
-    def back_open(self, level1_windows):
-        level1_windows.show()
-        self.close()
+    def check_sudoku(self):
+        if self.is_valid_board():
+            QMessageBox.information(self, "Поздравляем", "Вы решили правильно!")
+        else:
+            QMessageBox.warning(self, "Ошибка", "Неправильное положение цифры ")
 
-    # Уровень 3
-
-
-class FiveWindow(QMainWindow):
-    def __init__(self, level2_window):
-        super().__init__()
-        self.sudoku_board = None
-        self.setWindowTitle('Sudoky')
-        self.setGeometry(0, 0, 700, 600)
-
-        # Создание фонового изображения окна уровень 3
-        self.background = QLabel(self)
-        self.background.setPixmap(QPixmap("qwerty/menu.jpg"))
-        self.background.setGeometry(0, 0, 700, 600)
-        self.background.setScaledContents(True)
-
-        # Кнопка назад на окне уровень 3
-        self.back3 = QPushButton('Назад', self)
-        self.back3.setGeometry(5, 5, 150, 50)
-        self.back3.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
-        self.back3.clicked.connect(lambda: self.back_open1(level2_window))
-
-        self.back4 = QPushButton('Проверка', self)
-        self.back4.setGeometry(40, 200, 180, 50)
-        self.back4.setStyleSheet("font: 75 italic 20pt \"Arial\";\n""color:rgb(0, 0, 0);")
-        self.back4.clicked.connect(lambda: self.check_sudoku_board())
-
-        self.sudoku_board = [[0 for _ in range(9)] for _ in range(9)]
+    def is_valid_board(self):
         for i in range(9):
             for j in range(9):
-                self.sudoku_board[i][j] = QLineEdit(self)
-                self.sudoku_board[i][j].setGeometry(300 + j * 40, 120 + i * 40, 40, 40)
-                self.sudoku_board[i][j].setAlignment(Qt.AlignCenter)
-                self.sudoku_board[i][j].setValidator(QIntValidator(1, 9))  # Ограничение на ввод чисел от 1 до 9
-
-                if random.random() < 0.3:
-                    random_number = random.randint(1, 9)
-                    self.sudoku_board[i][j].setText(str(random_number))
-
-                self.Main_nadpis4 = QLabel(self)
-                self.Main_nadpis4.setText("Уровень: сложный")
-                self.Main_nadpis4.setStyleSheet("font: 75 italic 25pt \"Arial\";\n" "color: rgb(255, 255, 255);")
-                self.Main_nadpis4.setGeometry(320, 40, 400, 100)
-
-                # Кнопка назад на уровень 3
-
-    def check_sudoku_board(self):
-        for i in range(9):
-            row = [self.sudoku_board[i][j].text() for j in range(9)]
-            if len(row) != len(set(row)):
-                return False
-
-        for j in range(9):
-            column = [self.sudoku_board[i][j].text() for i in range(9)]
-            if len(column) != len(set(column)):
-                return False
-
-        for i in range(0, 9, 3):
-            for j in range(0, 9, 3):
-                square = [self.sudoku_board[m][n].text() for m in range(i, i + 3) for n in range(j, j + 3)]
-                if len(square) != len(set(square)):
+                if not self.is_valid_row(i, j) or not self.is_valid_column(i, j) or not self.is_valid_square(i, j):
                     return False
-
         return True
 
-    def back_open1(self, level2_windows):
-        level2_windows.show()
-        self.close()
+    def is_valid_row(self, row, col):
+        current_text = self.board[row][col].text().strip()
+        if current_text == '':
+            return False
+        current_value = int(current_text)
+        for j in range(9):
+            if j != col:
+                cell_text = self.board[row][j].text().strip()
+                if cell_text != '' and int(cell_text) == current_value:
+                    return False
+        return True
 
-
+    def is_valid_column(self, row, col):
+        current_text = self.board[row][col].text().strip()
+        if current_text == '':
+            return True  # Пустая ячейка считается валидной
+        current_value = int(current_text)
+        for i in range(9):
+            if i != row:
+                cell_text = self.board[i][col].text().strip()
+                if cell_text != '' and int(cell_text) == current_value:
+                    return False
+        return True
 
     def is_valid_square(self, row, col):
         current_text = self.board[row][col].text().strip()
@@ -356,8 +337,9 @@ class FiveWindow(QMainWindow):
                         return False
         return True
 
-if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    main_window = sudoky()
-    main_window.show()
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    application = sudoky()
+    application.show()
     sys.exit(app.exec_())
