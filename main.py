@@ -8,6 +8,33 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QPushButton, QLabel, QMa
 from PyQt5.QtGui import QPixmap, QPainter, QColor, QFont, QIntValidator, QPen
 from PyQt5.QtCore import Qt
 
+class SudokuGenerator:
+    def __init__(self):
+        self.board = [[0] * 9 for _ in range(9)]
+
+    # Генерация заполнения поля
+    def generate_full_board(self):
+        self.fill_board()
+        return self.board
+
+    def fill_board(self):
+        self.board = [[0] * 9 for _ in range(9)]
+        self._fill_board(0, 0)
+
+    def _fill_board(self, row, col):
+        if row == 9:
+            return True
+        if col == 9:
+            return self._fill_board(row + 1, 0)
+        numbers = list(range(1, 10))
+        random.shuffle(numbers)
+        for number in numbers:
+            if self._is_safe_to_place(row, col, number):
+                self.board[row][col] = number
+                if self._fill_board(row, col + 1):
+                    return True
+                self.board[row][col] = 0
+        return False
 
 class sudoky(QMainWindow):
 
