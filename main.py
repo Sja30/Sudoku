@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt
 import random
 
 
+# Класс для заполнения поля
 class SudokuGenerator:
     def __init__(self):
         self.board = [[0] * 9 for _ in range(9)]
@@ -18,10 +19,12 @@ class SudokuGenerator:
         self.fill_board()
         return self.board
 
+    # Создает пустой массив с начальными координатами (0,0)
     def fill_board(self):
         self.board = [[0] * 9 for _ in range(9)]
         self._fill_board(0, 0)
 
+    # Заполнение поля
     def _fill_board(self, row, col):
         if row == 9:
             return True
@@ -49,6 +52,7 @@ class SudokuGenerator:
                     return False
         return True
 
+    # Случайное удаление чисел из поля
     def remove_numbers_from_board(self, num_holes):
         count = 0
         while count < num_holes:
@@ -59,6 +63,7 @@ class SudokuGenerator:
                 count += 1
 
 
+# Создание главного окна
 class sudoky(QMainWindow):
     def __init__(self):
         super(sudoky, self).__init__()
@@ -105,6 +110,7 @@ class sudoky(QMainWindow):
         self.two_window.show()
 
 
+# Окно правила
 class OneWindow(QMainWindow):
     def __init__(self, first_window):
         super().__init__()
@@ -127,6 +133,7 @@ class OneWindow(QMainWindow):
         self.close()
 
 
+# Окно расположения уровней
 class TwoWindow(QMainWindow):
     def __init__(self, second_window):
         super().__init__()
@@ -178,6 +185,7 @@ class TwoWindow(QMainWindow):
         self.level2_window.show()
 
 
+# Создание окон для уровней
 class ThreeWindow(QMainWindow):
     def __init__(self, parent, difficulty):
         super().__init__()
@@ -245,6 +253,7 @@ class ThreeWindow(QMainWindow):
         central_widget = self.centralWidget()
         central_widget.setStyleSheet(style_str)
 
+    # Заполнение поля в зависимости от уровня сложности
     def get_num_holes(self):
         if self.difficulty == 'Легкий':
             return 30
@@ -258,6 +267,7 @@ class ThreeWindow(QMainWindow):
         level_window.show()
         self.close()
 
+    # Генерация игрового поля с учетом количества пустых клеток
     def generate_sudoku(self):
         generator = SudokuGenerator()
         generator.generate_full_board()
@@ -276,6 +286,7 @@ class ThreeWindow(QMainWindow):
                     cell.setReadOnly(False)
                 self.check_button.setEnabled(True)
 
+    # Проверка корректности введенных значений
     def check_input(self, text):
         sender = self.sender()  # Получаем объект QLineEdit, который послал сигнал
         if text.strip() == '':
@@ -286,12 +297,14 @@ class ThreeWindow(QMainWindow):
             QMessageBox.warning(self, "Ошибка", "Введите число от 1 до 9")
             sender.clear()
 
+    # проверка правильности решения
     def check_sudoku(self):
         if self.is_valid_board():
             QMessageBox.information(self, "Поздравляем", "Вы решили правильно!")
         else:
             QMessageBox.warning(self, "Ошибка", "Неправильное положение цифры ")
 
+    # проверка корректности всего поля
     def is_valid_board(self):
         for i in range(9):
             for j in range(9):
@@ -299,6 +312,7 @@ class ThreeWindow(QMainWindow):
                     return False
         return True
 
+    # проверка корректности строки
     def is_valid_row(self, row, col):
         current_text = self.board[row][col].text().strip()
         if current_text == '':
@@ -311,6 +325,7 @@ class ThreeWindow(QMainWindow):
                     return False
         return True
 
+    # проверка корректности столбца
     def is_valid_column(self, row, col):
         current_text = self.board[row][col].text().strip()
         if current_text == '':
@@ -323,6 +338,7 @@ class ThreeWindow(QMainWindow):
                     return False
         return True
 
+    # проверка корректности квадрата 3х3
     def is_valid_square(self, row, col):
         current_text = self.board[row][col].text().strip()
         if current_text == '':
